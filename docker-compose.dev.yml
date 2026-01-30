@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # FastAPI Backend Service
+  # =========================================================================
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    container_name: computer-use-fastapi-dev
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATABASE_URL=sqlite:///./computer_use_demo.db
+      - DEBUG=True
+    ports:
+      - "8000:8000"      # FastAPI
+      - "5900:5900"      # VNC
+      - "6080:6080"      # noVNC web
+    volumes:
+      - ./computer_use_demo:/home/computeruse/computer_use_demo
+      - ./data:/home/computeruse/data
+    command: uvicorn computer_use_demo.fastapi_app:app --host 0.0.0.0 --port 8000 --reload --log-level info --access-log
+    networks:
+      - computer-use-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =========================================================================
+  # Optional: PostgreSQL for production
+  # =========================================================================
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: computer-use-db
+  #   environment:
+  #     - POSTGRES_USER=computeruse
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD:-changeme}
+  #     - POSTGRES_DB=computer_use_demo
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - computer-use-net
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U computeruse"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+networks:
+  computer-use-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

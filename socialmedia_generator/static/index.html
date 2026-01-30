@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computer Use Demo - Agent Interface</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="main-container">
+        <!-- LEFT PANEL: Sessions List -->
+        <div class="left-panel">
+            <div class="left-panel-header">Sessions</div>
+            
+            <div class="session-controls">
+                <div class="session-info" id="session-info">No active session</div>
+            </div>
+
+            <div class="session-list" id="sessionList">
+                <div style="padding: 20px; text-align: center; color: #999; font-size: 12px;">
+                    No sessions available
+                </div>
+            </div>
+
+            <div class="new-task-section">
+                <button class="new-task-button" onclick="createNewSession()">New Agent Task</button>
+            </div>
+        </div>
+
+        <!-- MIDDLE PANEL: VNC Display -->
+        <div class="middle-panel">
+            <div class="vnc-header">
+                Virtual Machine Display
+                <div>
+                    <button class="control-button" id="viewOnlyBtn" onclick="toggleViewOnly()">View Only: On</button>
+                </div>
+            </div>
+            <div class="vnc-container" id="vncContainer">
+                <div id="vncPlaceholder" style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; font-size: 16px; text-align: center; padding: 20px;">
+                    <div>
+                        <div style="font-size: 48px; margin-bottom: 20px;">🖥️</div>
+                        <div>No session selected</div>
+                        <div style="font-size: 14px; margin-top: 10px;">Create a new session or select an existing one to view the display</div>
+                    </div>
+                </div>
+                <iframe 
+                    id="vncFrame"
+                    style="width:100%; height:100%; border:none; background:#000; display:none;"
+                    allow="clipboard-read; clipboard-write"
+                ></iframe>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Chat & File Management -->
+        <div class="right-panel">
+            <!-- Chat Session (Top) -->
+            <div class="chat-section">
+                <div class="chat-header">
+                    Chat Session
+                    <span id="taskStatusIndicator"></span>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message system">Welcome! Create a session and start a task to begin.</div>
+                </div>
+                <div class="new-task-section">
+                <div class="button-group" style="margin-bottom: 8px;">
+                    <textarea 
+                        id="newTaskInput" 
+                        class="new-task-input" 
+                        placeholder="Describe the task for the agent..."
+                        onkeydown="if(event.key === 'Enter' && !event.shiftKey) { startNewTask(); event.preventDefault(); }"
+                        style="flex: 1; margin: 0;"
+                    ></textarea>
+                    <button class="send-button" onclick="startNewTask()" title="Send task (Shift+Enter for newline)">→</button>
+                </div>
+            </div>
+            </div>
+
+            <!-- File Management (Bottom) -->
+            <div class="file-section">
+                <div class="file-header">File Management</div>
+                <div class="file-list" id="fileList">
+                    <div style="padding: 20px; text-align: center; color: #999; font-size: 11px;">
+                        No files tracked yet
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="loading-modal" id="loadingModal">
+        <div class="loading-modal-content">
+            <div class="loading-modal-spinner"></div>
+            <div class="loading-modal-text">Loading Screen...</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>

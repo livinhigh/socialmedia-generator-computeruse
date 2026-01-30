@@ -1,0 +1,127 @@
+# Docker build for Computer Use Demo FastAPI with X11/VNC
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_PRIORITY=high
+
+WORKDIR /home/computeruse
+
+# Install all dependencies (X11, VNC, Python, runtime)
+RUN apt-get update && apt-get -y upgrade && \
+    apt-get install -y --no-install-recommends \
+    gnupg \
+    software-properties-common && \
+    add-apt-repository -y ppa:mozillateam/ppa && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    # UI Requirements
+    xvfb \
+    xterm \
+    xdotool \
+    x11-utils \
+    scrot \
+    imagemagick \
+    sudo \
+    mutter \
+    x11vnc \
+    # Python & build tools
+    python3.11 \
+    python3.11-dev \
+    python3.11-venv \
+    python3-pip \
+    build-essential \
+    libssl-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libncursesw5-dev \
+    xz-utils \
+    tk-dev \
+    libxml2-dev \
+    libxmlsec1-dev \
+    libffi-dev \
+    liblzma-dev \
+    # Runtime dependencies
+    ffmpeg \
+    curl \
+    wget \
+    git \
+    # Network tools
+    net-tools \
+    netcat \
+    # Docker
+    docker.io \
+    # Userland apps
+    libreoffice \
+    firefox-esr \
+    x11-apps \
+    xpdf \
+    gedit \
+    xpaint \
+    tint2 \
+    galculator \
+    pcmanfm \
+    unzip \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set Python 3.11 as default
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+
+# Upgrade pip
+RUN python3 -m pip install --upgrade pip setuptools wheel
+
+# Install noVNC
+RUN git clone --branch v1.5.0 https://github.com/novnc/noVNC.git /opt/noVNC && \
+    git clone --branch v0.12.0 https://github.com/novnc/websockify /opt/noVNC/utils/websockify && \
+    ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
+
+# Create app user and add to docker group for Docker socket access
+RUN useradd -m -u 1000 -s /bin/bash computeruse && \
+    echo "computeruse ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    groupadd -f docker && \
+    usermod -aG docker computeruse && \
+    chown -R computeruse:computeruse /home/computeruse
+
+USER computeruse
+
+# Copy requirements and install Python packages
+COPY --chown=computeruse:computeruse computer_use_demo/requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+# Copy startup scripts and static content
+COPY --chown=computeruse:computeruse image/ ./
+
+# Modify system Firefox desktop file to use our launcher script
+USER root
+RUN sed -i 's|^Exec=firefox-esr|Exec=/home/computeruse/firefox_launcher.sh|g' /usr/share/applications/firefox-esr.desktop
+USER computeruse
+
+# Copy application code
+COPY --chown=computeruse:computeruse computer_use_demo/ ./computer_use_demo
+
+# Set environment
+ENV PYTHONUNBUFFERED=1
+ENV DATABASE_URL=sqlite:///./computer_use_demo.db
+ENV DISPLAY_NUM=1
+ENV HEIGHT=768
+ENV WIDTH=1024
+ENV PATH="/home/computeruse/.local/bin:$PATH"
+
+# Make scripts executable
+RUN chmod +x *.sh
+
+# Ensure desktop files have correct permissions (must be readable but not executable)
+RUN chmod 644 .config/tint2/applications/*.desktop
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose ports
+EXPOSE 8000 5900 6080
+
+# Use entrypoint to start all services
+ENTRYPOINT ["./entrypoint_fastapi.sh"]

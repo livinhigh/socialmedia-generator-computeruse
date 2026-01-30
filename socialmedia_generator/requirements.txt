@@ -1,0 +1,39 @@
+streamlit==1.41.0
+anthropic[bedrock,vertex]>=0.39.0
+openai>=0.27.8
+huggingface_hub>=0.16.4
+jsonschema==4.22.0
+boto3>=1.28.57
+google-auth<3,>=2
+trafilatura>=1.6.7
+aioboto3>=10.5.3
+
+# FastAPI & Server
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# Database
+sqlalchemy
+alembic  # Database migrations
+
+# Database Drivers
+psycopg2-binary  # PostgreSQL
+aiosqlite  # SQLite async support
+
+# Web Scraping & HTML Parsing
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+lxml>=4.9.0
+
+# File I/O
+aiofiles>=23.0.0
+
+# WebSocket Support
+websockets>=12.0
+
+# VNC Support (Optional - uncomment as needed)
+# vncdotool>=1.1.0  # For VNC automation
+# pyvnc>=0.9.1      # For VNC protocol support
+smolagents>=0.3.6
